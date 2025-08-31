@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String   @unique
+  pwd       String?
+  followers String[] @db.ObjectId  // 使用@db.ObjectId标记这是对其他文档的引用
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
