@@ -21,7 +21,7 @@ const authMiddleware = jwt({
 
 // 根路由
 app.get('/', (c) => {
-  return c.json({ 
+  return c.json({
     message: 'Welcome to Hono + Prisma + MongoDB API with Auth',
     endpoints: {
       auth: '/api/auth',
@@ -37,10 +37,10 @@ app.route('/api/auth', authRoutes)
 // 需要认证的路由
 app
   .use(authMiddleware)
-  .route('/users', userRoutes)
-  app
+  .route('/api/users', userRoutes)
+app
   .use(authMiddleware)
-  .route('/messages', messageRoutes)
+  .route('/api/messages', messageRoutes)
 
 // 启动服务器
 const port = parseInt(process.env.PORT || '3000')
