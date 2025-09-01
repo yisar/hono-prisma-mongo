@@ -1,13 +1,29 @@
 import { Hono } from 'hono'
-import prisma from '../lib/prisma'
+import { PrismaClient } from '@prisma/client'
 
+const prisma = new PrismaClient()
 const messageRoutes = new Hono()
 
-// 获取用户的所有消息（发送和接收）
-messageRoutes.get('/user/:userId', async (c) => {
+// 获取当前用户的所有消息
+messageRoutes.get('/', async (c) => {
   try {
-    const userId = c.req.param('userId')
-    
+    const userId = c.get('jwtPayload').sub
+
+    // 获取收到的消息
+    const receivedMessages = await prisma.message.findMany({
+      where: { receiverId: userId },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
     // 获取发送的消息
     const sentMessages = await prisma.message.findMany({
       where: { senderId: userId },
@@ -15,136 +31,153 @@ messageRoutes.get('/user/:userId', async (c) => {
         receiver: {
           select: {
             id: true,
-            pwd: true,
-            name: true
+            name: true,
+            email: true
           }
         }
       },
       orderBy: { createdAt: 'desc' }
     })
-    
-    // 获取接收的消息
-    const receivedMessages = await prisma.message.findMany({
-      where: { receiverId: userId },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            pwd: true,
-            name: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
-    
+
     return c.json({
-      sent: sentMessages,
-      received: receivedMessages
+      receivedMessages,
+      sentMessages
     })
   } catch (error) {
-    return c.json({ error: 'Failed to fetch messages' }, 500)
+    console.error('Get messages error:', error)
+    return c.json({ message: 'Failed to get messages' }, 500)
   }
 })
 
-// 获取两个用户之间的对话
-messageRoutes.get('/conversation/:userId1/:userId2', async (c) => {
+// 获取与特定用户的对话
+messageRoutes.get('/conversation/:otherUserId', async (c) => {
   try {
-    const userId1 = c.req.param('userId1')
-    const userId2 = c.req.param('userId2')
-    
+    const userId = c.get('jwtPayload').sub
+    const otherUserId = c.req.param('otherUserId')
+
+    // 验证对方用户是否存在
+    const otherUser = await prisma.user.findUnique({
+      where: { id: otherUserId }
+    })
+
+    if (!otherUser) {
+      return c.json({ message: 'User not found' }, 404)
+    }
+
+    // 获取双方的消息
     const messages = await prisma.message.findMany({
       where: {
         OR: [
-          { senderId: userId1, receiverId: userId2 },
-          { senderId: userId2, receiverId: userId1 }
+          { senderId: userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: userId }
         ]
       },
       include: {
         sender: {
           select: {
             id: true,
-            pwd: true,
-            name: true
+            name: true,
+            email: true
           }
         },
         receiver: {
           select: {
             id: true,
-            pwd: true,
-            name: true
+            name: true,
+            email: true
           }
         }
       },
       orderBy: { createdAt: 'asc' }
     })
-    
+
     return c.json(messages)
   } catch (error) {
-    return c.json({ error: 'Failed to fetch conversation' }, 500)
+    console.error('Get conversation error:', error)
+    return c.json({ message: 'Failed to get conversation' }, 500)
   }
 })
 
 // 发送消息
 messageRoutes.post('/', async (c) => {
   try {
-    const { senderId, receiverId, content } = await c.req.json()
-    
-    if (!senderId || !receiverId || !content) {
-      return c.json(
-        { error: 'Sender ID, receiver ID and content are required' }, 
-        400
-      )
+    const senderId = c.get('jwtPayload').sub
+    const { receiverId, content } = await c.req.json()
+
+    // 验证输入
+    if (!receiverId || !content) {
+      return c.json({ message: 'Receiver ID and content are required' }, 400)
     }
-    
-    // 验证发送者和接收者是否存在
-    const [sender, receiver] = await Promise.all([
-      prisma.user.findUnique({ where: { id: senderId } }),
-      prisma.user.findUnique({ where: { id: receiverId } })
-    ])
-    
-    if (!sender || !receiver) {
-      return c.json({ error: 'Sender or receiver not found' }, 404)
+
+    // 验证接收者是否存在
+    const receiver = await prisma.user.findUnique({
+      where: { id: receiverId }
+    })
+
+    if (!receiver) {
+      return c.json({ message: 'Receiver not found' }, 404)
     }
-    
+
+    // 创建消息
     const message = await prisma.message.create({
       data: {
+        content,
         senderId,
-        receiverId,
-        content
+        receiverId
       },
       include: {
         sender: {
           select: {
             id: true,
-            pwd: true,
-            name: true
+            name: true,
+            email: true
           }
         },
         receiver: {
           select: {
             id: true,
-            pwd: true,
-            name: true
+            name: true,
+            email: true
           }
         }
       }
     })
-    
+
     return c.json(message, 201)
   } catch (error) {
-    return c.json({ error: 'Failed to send message' }, 500)
+    console.error('Send message error:', error)
+    return c.json({ message: 'Failed to send message' }, 500)
   }
 })
 
 // 删除消息
 messageRoutes.delete('/:id', async (c) => {
   try {
-    const id = c.req.param('id')
-    await prisma.message.delete({ where: { id } })
+    const userId = c.get('jwtPayload').sub
+    const messageId = c.req.param('id')
+
+    // 查找消息
+    const message = await prisma.message.findUnique({
+      where: { id: messageId }
+    })
+
+    if (!message) {
+      return c.json({ message: 'Message not found' }, 404)
+    }
+
+    // 检查权限 - 只能删除自己发送的消息
+    if (message.senderId !== userId) {
+      return c.json({ message: 'Unauthorized' }, 403)
+    }
+
+    await prisma.message.delete({
+      where: { id: messageId }
+    })
+
     return c.json({ message: 'Message deleted successfully' })
   } catch (error) {
-    return c.json({ error: 'Failed to delete message' }, 500)
+    console.error('Delete message error:', error)
+    return c.json({ message: 'Failed to delete message' }, 500)
   }
 })
 

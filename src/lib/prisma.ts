@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 
-// 创建Prisma客户端实例
-const prisma = new PrismaClient()
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+export const prisma = globalForPrisma.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 export default prisma

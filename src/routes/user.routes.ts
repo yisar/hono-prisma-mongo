@@ -1,7 +1,34 @@
 import { Hono } from 'hono'
-import prisma from '../lib/prisma'
+import { PrismaClient } from '@prisma/client'
 
+const prisma = new PrismaClient()
 const userRoutes = new Hono()
+
+// 获取当前登录用户信息
+userRoutes.get('/me', async (c) => {
+  try {
+    const userId = c.get('jwtPayload').sub
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    if (!user) {
+      return c.json({ message: 'User not found' }, 404)
+    }
+
+    return c.json(user)
+  } catch (error) {
+    console.error('Get current user error:', error)
+    return c.json({ message: 'Failed to get user' }, 500)
+  }
+})
 
 // 获取所有用户
 userRoutes.get('/', async (c) => {
@@ -9,7 +36,6 @@ userRoutes.get('/', async (c) => {
     const users = await prisma.user.findMany({
       select: {
         id: true,
-        pwd: true,
         email: true,
         name: true,
         createdAt: true
@@ -17,7 +43,8 @@ userRoutes.get('/', async (c) => {
     })
     return c.json(users)
   } catch (error) {
-    return c.json({ error: 'Failed to fetch users' }, 500)
+    console.error('Get users error:', error)
+    return c.json({ message: 'Failed to get users' }, 500)
   }
 })
 
@@ -29,59 +56,35 @@ userRoutes.get('/:id', async (c) => {
       where: { id },
       select: {
         id: true,
-        pwd: true,
         email: true,
         name: true,
         createdAt: true
       }
     })
-    
+
     if (!user) {
-      return c.json({ error: 'User not found' }, 404)
+      return c.json({ message: 'User not found' }, 404)
     }
-    
+
     return c.json(user)
   } catch (error) {
-    return c.json({ error: 'Failed to fetch user' }, 500)
-  }
-})
-
-// 创建用户
-userRoutes.post('/', async (c) => {
-  try {
-    const { pwd, email, name } = await c.req.json()
-    
-    if (!pwd || !email) {
-      return c.json({ error: 'pwd and email are required' }, 400)
-    }
-    
-    const user = await prisma.user.create({
-      data: {
-        pwd,
-        email,
-        name
-      },
-      select: {
-        id: true,
-        pwd: true,
-        email: true,
-        name: true,
-        createdAt: true
-      }
-    })
-    
-    return c.json(user, 201)
-  } catch (error) {
-    return c.json({ error: 'Failed to create user' }, 500)
+    console.error('Get user error:', error)
+    return c.json({ message: 'Failed to get user' }, 500)
   }
 })
 
 // 更新用户
 userRoutes.put('/:id', async (c) => {
   try {
+    const userId = c.get('jwtPayload').sub
     const id = c.req.param('id')
-    const { name, email } = await c.req.json()
     
+    // 检查权限 - 只能更新自己的信息
+    if (userId !== id) {
+      return c.json({ message: 'Unauthorized' }, 403)
+    }
+
+    const { name, email } = await c.req.json()
     const user = await prisma.user.update({
       where: { id },
       data: {
@@ -90,27 +93,39 @@ userRoutes.put('/:id', async (c) => {
       },
       select: {
         id: true,
-        pwd: true,
         email: true,
         name: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     })
-    
+
     return c.json(user)
   } catch (error) {
-    return c.json({ error: 'Failed to update user' }, 500)
+    console.error('Update user error:', error)
+    return c.json({ message: 'Failed to update user' }, 500)
   }
 })
 
 // 删除用户
 userRoutes.delete('/:id', async (c) => {
   try {
+    const userId = c.get('jwtPayload').sub
     const id = c.req.param('id')
-    await prisma.user.delete({ where: { id } })
+    
+    // 检查权限 - 只能删除自己的账户
+    if (userId !== id) {
+      return c.json({ message: 'Unauthorized' }, 403)
+    }
+
+    await prisma.user.delete({
+      where: { id }
+    })
+
     return c.json({ message: 'User deleted successfully' })
   } catch (error) {
-    return c.json({ error: 'Failed to delete user' }, 500)
+    console.error('Delete user error:', error)
+    return c.json({ message: 'Failed to delete user' }, 500)
   }
 })
 

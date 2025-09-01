@@ -9,22 +9,22 @@ datasource db {
 
 model User {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name  String    @unique
   email     String    @unique
-  pwd      String?
+  password  String    @db.String
+  name      String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  sentMessages   Message[] @relation("SenderMessages")
-  receivedMessages Message[] @relation("ReceiverMessages")
+  sentMessages    Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
 model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   content   String
+  senderId  String   @db.ObjectId
+  receiverId String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  senderId  String   @db.ObjectId
-  receiverId String  @db.ObjectId
-  sender    User     @relation("SenderMessages", fields: [senderId], references: [id])
-  receiver  User     @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }
