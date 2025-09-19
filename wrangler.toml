@@ -1,0 +1,7 @@
+name = "sideapp"
+compatibility_date = "2024-07-01"
+main = "src/index.ts"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
