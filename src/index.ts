@@ -42,11 +42,13 @@ app
   .use(authMiddleware)
   .route('/api/messages', messageRoutes)
 
-// 启动服务器
-const port = parseInt(process.env.PORT || '3000')
-console.log(`Server is running on http://localhost:${port}`)
+export default app
 
-serve({
-  fetch: app.fetch,
-  port
-})
+// 启动服务器
+// const port = parseInt(process.env.PORT || '3000')
+// console.log(`Server is running on http://localhost:${port}`)
+
+// serve({
+//   fetch: app.fetch,
+//   port
+// })

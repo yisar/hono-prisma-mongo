@@ -1,7 +1,11 @@
 name = "sideapp"
-compatibility_date = "2024-07-01"
+compatibility_date = "2025-09-19"
 main = "src/index.ts"
 compatibility_flags = ["nodejs_compat"]
+format = "esm"
+
+[vars]
+DATABASE_URL = "mongodb+srv://1533540012:changhao123@cluster0.yc0vr.mongodb.net/test"
 
 [assets]
 directory = "./public"
