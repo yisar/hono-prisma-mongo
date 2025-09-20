@@ -1,12 +1,18 @@
 import { Hono } from 'hono'
 import md5 from 'md5'
-import { sign } from 'hono/jwt'
+import { jwt, sign } from 'hono/jwt'
 
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 
 const prisma = new PrismaClient().$extends(withAccelerate())
 const userRoutes = new Hono()
+const JWT_KEY = process.env.JWT_KEY || 'your-secret-key-change-in-production'
+
+// JWT认证中间件
+export const auth = jwt({
+  secret: JWT_KEY
+})
 
 // 用户注册
 userRoutes.post('/register', async (c) => {
@@ -28,7 +34,7 @@ userRoutes.post('/register', async (c) => {
     }
 
     // 密码加密
-    const hashedPassword = md5(md5(password)+'clicli2333?side.cc')
+    const hashedPassword = md5(md5(password) + 'clicli2333?side.cc')
 
     // 创建用户
     const user = await prisma.user.create({
@@ -73,7 +79,7 @@ userRoutes.post('/login', async (c) => {
     }
 
     // 验证密码
-    const hashedPassword = md5(md5(password)+'clicli2333?side.cc')
+    const hashedPassword = md5(md5(password) + 'clicli2333?side.cc')
     const isPasswordValid = hashedPassword === user.password
     if (!isPasswordValid) {
       return c.json({ message: 'Invalid credentials' }, 401)
@@ -81,11 +87,11 @@ userRoutes.post('/login', async (c) => {
 
     // 生成JWT
     const token = await sign(
-      { 
-        sub: user.id, 
+      {
+        sub: user.id,
         email: user.email,
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24小时有效期
-      }, 
+      },
       JWT_KEY
     )
 
@@ -105,7 +111,7 @@ userRoutes.post('/login', async (c) => {
 })
 
 // 获取当前登录用户信息
-userRoutes.get('/me', async (c) => {
+userRoutes.get('/me', auth, async (c) => {
   try {
     const userId = c.get('jwtPayload').sub
     const user = await prisma.user.findUnique({
@@ -131,7 +137,7 @@ userRoutes.get('/me', async (c) => {
 })
 
 // 获取所有用户
-userRoutes.get('/', async (c) => {
+userRoutes.get('/', auth, async (c) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -149,7 +155,7 @@ userRoutes.get('/', async (c) => {
 })
 
 // 获取单个用户
-userRoutes.get('/:id', async (c) => {
+userRoutes.get('/:id', auth, async (c) => {
   try {
     const id = c.req.param('id')
     const user = await prisma.user.findUnique({
@@ -174,11 +180,11 @@ userRoutes.get('/:id', async (c) => {
 })
 
 // 更新用户
-userRoutes.put('/:id', async (c) => {
+userRoutes.put('/:id', auth, async (c) => {
   try {
     const userId = c.get('jwtPayload').sub
     const id = c.req.param('id')
-    
+
     // 检查权限 - 只能更新自己的信息
     if (userId !== id) {
       return c.json({ message: 'Unauthorized' }, 403)
@@ -208,11 +214,11 @@ userRoutes.put('/:id', async (c) => {
 })
 
 // 删除用户
-userRoutes.delete('/:id', async (c) => {
+userRoutes.delete('/:id', auth, async (c) => {
   try {
     const userId = c.get('jwtPayload').sub
     const id = c.req.param('id')
-    
+
     // 检查权限 - 只能删除自己的账户
     if (userId !== id) {
       return c.json({ message: 'Unauthorized' }, 403)
