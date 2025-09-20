@@ -4,7 +4,6 @@ import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
 import userRoutes from './routes/user'
 import messageRoutes from './routes/message'
-import authRoutes from './routes/auth'
 
 // 加载环境变量
 const JWT_KEY = process.env.JWT_KEY || 'your-secret-key-change-in-production'
@@ -23,9 +22,6 @@ const authMiddleware = jwt({
 app.get('/', (c) => {
   return c.text('hello side')
 })
-
-// 公开路由
-app.route('/auth', authRoutes)
 
 // 需要认证的路由
 app
