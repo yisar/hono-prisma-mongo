@@ -66,7 +66,7 @@ userRoutes.post('/login', async (c) => {
 
     // 验证输入
     if (!email || !password) {
-      return c.json({ message: 'Email and password are required' }, 400)
+      return c.json({ message: '邮箱和密码必须' }, 400)
     }
 
     // 查找用户
@@ -75,14 +75,14 @@ userRoutes.post('/login', async (c) => {
     })
 
     if (!user) {
-      return c.json({ message: 'Invalid credentials' }, 401)
+      return c.json({ message: 'token失效' }, 401)
     }
 
     // 验证密码
     const hashedPassword = md5(md5(password) + 'clicli2333?side.cc')
     const isPasswordValid = hashedPassword === user.password
     if (!isPasswordValid) {
-      return c.json({ message: 'Invalid credentials' }, 401)
+      return c.json({ message: '用户名或密码不存在' }, 401)
     }
 
     // 生成JWT
@@ -90,13 +90,13 @@ userRoutes.post('/login', async (c) => {
       {
         sub: user.id,
         email: user.email,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24小时有效期
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 48 // 24小时有效期
       },
       JWT_KEY
     )
 
     return c.json({
-      message: 'Login successful',
+      message: '登录成功',
       token,
       user: {
         id: user.id,
@@ -105,8 +105,8 @@ userRoutes.post('/login', async (c) => {
       }
     })
   } catch (error) {
-    console.error('Login error:', error)
-    return c.json({ message: 'Login failed' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -126,13 +126,13 @@ userRoutes.get('/me', auth, async (c) => {
     })
 
     if (!user) {
-      return c.json({ message: 'User not found' }, 404)
+      return c.json({ message: '用户存在' }, 404)
     }
 
     return c.json(user)
   } catch (error) {
-    console.error('Get current user error:', error)
-    return c.json({ message: 'Failed to get user' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -149,8 +149,8 @@ userRoutes.get('/', auth, async (c) => {
     })
     return c.json(users)
   } catch (error) {
-    console.error('Get users error:', error)
-    return c.json({ message: 'Failed to get users' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -169,13 +169,13 @@ userRoutes.get('/:id', auth, async (c) => {
     })
 
     if (!user) {
-      return c.json({ message: 'User not found' }, 404)
+      return c.json({ message: '用户不存在' }, 404)
     }
 
     return c.json(user)
   } catch (error) {
-    console.error('Get user error:', error)
-    return c.json({ message: 'Failed to get user' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -187,7 +187,7 @@ userRoutes.put('/:id', auth, async (c) => {
 
     // 检查权限 - 只能更新自己的信息
     if (userId !== id) {
-      return c.json({ message: 'Unauthorized' }, 403)
+      return c.json({ message: '用户没有权限' }, 403)
     }
 
     const { name, email } = await c.req.json()
@@ -208,8 +208,8 @@ userRoutes.put('/:id', auth, async (c) => {
 
     return c.json(user)
   } catch (error) {
-    console.error('Update user error:', error)
-    return c.json({ message: 'Failed to update user' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -221,17 +221,17 @@ userRoutes.delete('/:id', auth, async (c) => {
 
     // 检查权限 - 只能删除自己的账户
     if (userId !== id) {
-      return c.json({ message: 'Unauthorized' }, 403)
+      return c.json({ message: '没有权限' }, 403)
     }
 
     await prisma.user.delete({
       where: { id }
     })
 
-    return c.json({ message: 'User deleted successfully' })
+    return c.json({ message: '删除成功' })
   } catch (error) {
-    console.error('Delete user error:', error)
-    return c.json({ message: 'Failed to delete user' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 

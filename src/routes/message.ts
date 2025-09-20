@@ -45,8 +45,8 @@ messageRoutes.get('/', async (c) => {
       sentMessages
     })
   } catch (error) {
-    console.error('Get messages error:', error)
-    return c.json({ message: 'Failed to get messages' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -62,7 +62,7 @@ messageRoutes.get('/conversation/:otherUserId', async (c) => {
     })
 
     if (!otherUser) {
-      return c.json({ message: 'User not found' }, 404)
+      return c.json({ message: '用户不存在' }, 404)
     }
 
     // 获取双方的消息
@@ -94,8 +94,8 @@ messageRoutes.get('/conversation/:otherUserId', async (c) => {
 
     return c.json(messages)
   } catch (error) {
-    console.error('Get conversation error:', error)
-    return c.json({ message: 'Failed to get conversation' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -116,7 +116,7 @@ messageRoutes.post('/', async (c) => {
     })
 
     if (!receiver) {
-      return c.json({ message: 'Receiver not found' }, 404)
+      return c.json({ message: '接收者不存在' }, 404)
     }
 
     // 创建消息
@@ -146,8 +146,8 @@ messageRoutes.post('/', async (c) => {
 
     return c.json(message, 201)
   } catch (error) {
-    console.error('Send message error:', error)
-    return c.json({ message: 'Failed to send message' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
@@ -163,22 +163,22 @@ messageRoutes.delete('/:id', async (c) => {
     })
 
     if (!message) {
-      return c.json({ message: 'Message not found' }, 404)
+      return c.json({ message: '消息不存在' }, 404)
     }
 
     // 检查权限 - 只能删除自己发送的消息
     if (message.senderId !== userId) {
-      return c.json({ message: 'Unauthorized' }, 403)
+      return c.json({ message: '没有权限' }, 403)
     }
 
     await prisma.message.delete({
       where: { id: messageId }
     })
 
-    return c.json({ message: 'Message deleted successfully' })
+    return c.json({ message: '消息删除成功' })
   } catch (error) {
-    console.error('Delete message error:', error)
-    return c.json({ message: 'Failed to delete message' }, 500)
+    console.error(`报错 ${error}`)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
