@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import md5 from 'md5'
 import { sign } from 'hono/jwt'
 
-import { PrismaClient } from '@prisma/client/edge.js'
+import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 
 const prisma = new PrismaClient().$extends(withAccelerate())
