@@ -7,7 +7,7 @@ import messageRoutes from './routes/message.routes'
 import authRoutes from './routes/auth.routes'
 
 // 加载环境变量
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_KEY = process.env.JWT_KEY || 'your-secret-key-change-in-production'
 
 const app = new Hono()
 
@@ -16,39 +16,23 @@ app.use(cors())
 
 // JWT认证中间件
 const authMiddleware = jwt({
-  secret: JWT_SECRET
+  secret: JWT_KEY
 })
 
 // 根路由
 app.get('/', (c) => {
-  return c.json({
-    message: 'Welcome to Hono + Prisma + MongoDB API with Auth',
-    endpoints: {
-      auth: '/api/auth',
-      users: '/api/users',
-      messages: '/api/messages'
-    }
-  })
+  return c.text('hello side')
 })
 
 // 公开路由
-app.route('/api/auth', authRoutes)
+app.route('/auth', authRoutes)
 
 // 需要认证的路由
 app
   .use(authMiddleware)
-  .route('/api/users', userRoutes)
+  .route('/user', userRoutes)
 app
   .use(authMiddleware)
-  .route('/api/messages', messageRoutes)
+  .route('/msg', messageRoutes)
 
 export default app
-
-// 启动服务器
-// const port = parseInt(process.env.PORT || '3000')
-// console.log(`Server is running on http://localhost:${port}`)
-
-// serve({
-//   fetch: app.fetch,
-//   port
-// })

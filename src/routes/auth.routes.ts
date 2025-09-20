@@ -56,7 +56,7 @@ authRoutes.post('/register', async (c) => {
 authRoutes.post('/login', async (c) => {
   try {
     const { email, password } = await c.req.json()
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+    const JWT_KEY = process.env.JWT_KEY || 'your-secret-key-change-in-production'
 
     // 验证输入
     if (!email || !password) {
@@ -86,7 +86,7 @@ authRoutes.post('/login', async (c) => {
         email: user.email,
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24小时有效期
       }, 
-      JWT_SECRET
+      JWT_KEY
     )
 
     return c.json({
