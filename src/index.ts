@@ -2,9 +2,9 @@ import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { jwt } from 'hono/jwt'
-import userRoutes from './routes/user.routes'
-import messageRoutes from './routes/message.routes'
-import authRoutes from './routes/auth.routes'
+import userRoutes from './routes/user'
+import messageRoutes from './routes/message'
+import authRoutes from './routes/auth'
 
 // 加载环境变量
 const JWT_KEY = process.env.JWT_KEY || 'your-secret-key-change-in-production'

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "wrangler dev src/index.ts",
-    "emm": "node dist/index.js"
+    "deploy": "npx wrangler deploy"
   },
   "dependencies": {
     "@hono/node-server": "^1.11.1",
