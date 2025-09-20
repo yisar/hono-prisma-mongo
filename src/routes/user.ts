@@ -30,7 +30,7 @@ userRoutes.post('/register', async (c) => {
     })
 
     if (existingUser) {
-      return c.json({ message: 'User already exists' }, 409)
+      return c.json({ message: '用户已存在' }, 409)
     }
 
     // 密码加密
@@ -51,10 +51,10 @@ userRoutes.post('/register', async (c) => {
       }
     })
 
-    return c.json({ message: 'User registered successfully', user }, 201)
+    return c.json({ message: '注册成功', user }, 201)
   } catch (error) {
-    console.error('Registration error:', error)
-    return c.json({ message: 'Registration failed' }, 500)
+    console.error(`报错 ${error}`, error)
+    return c.json({ message: `报错 ${error}` }, 500)
   }
 })
 
