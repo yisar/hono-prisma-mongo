@@ -1,9 +1,11 @@
 import { Hono } from 'hono'
-import { PrismaClient } from '@prisma/client/edge'
 import md5 from 'md5'
 import { sign } from 'hono/jwt'
 
-const prisma = new PrismaClient()
+import { PrismaClient } from '@prisma/client/edge.js'
+import { withAccelerate } from '@prisma/extension-accelerate'
+
+const prisma = new PrismaClient().$extends(withAccelerate())
 const authRoutes = new Hono()
 
 // 用户注册
