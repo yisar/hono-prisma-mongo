@@ -8,23 +8,51 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  email     String    @unique
-  pwd       String    @db.String
-  name      String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  sentMessages    Message[] @relation("SentMessages")
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  email            String    @unique
+  pwd              String    @db.String
+  name             String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  posts            Post[]    @relation("UserPosts")
 }
 
 model Message {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
-  senderId  String   @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String
+  senderId   String   @db.ObjectId
   receiverId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+// 合并问题和回答的模型
+model Post {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      PostType // 区分是问题还是回答
+  title     String? // 只有问题有标题
+  content   String // 内容（问题内容或回答内容）
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
-  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  // 关联：内容的作者
+  author   User   @relation("UserPosts", fields: [authorId], references: [id])
+  authorId String @db.ObjectId
+
+  // 自引用：父级内容（如果是回答，指向它所回答的问题或其他回答）
+  parent   Post?   @relation("PostRelation", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentId String? @db.ObjectId
+
+  // 自引用：子级内容（问题的回答或回答的评论）
+  children Post[] @relation("PostRelation")
+}
+
+// 枚举类型：区分内容类型
+enum PostType {
+  QUESTION // 问题
+  ANSWER // 回答
 }

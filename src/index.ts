@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import userRoutes from './routes/user'
 import messageRoutes from './routes/message'
 import { auth } from './routes/user'
+import postRoutes from './routes/post'
 
 const app = new Hono()
 
@@ -20,5 +21,8 @@ app
 app
   .use(auth)
   .route('/msg', messageRoutes)
+
+app
+  .route('/qa', postRoutes)
 
 export default app
