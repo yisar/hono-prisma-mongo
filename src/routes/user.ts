@@ -17,11 +17,11 @@ export const auth = jwt({
 // 用户注册
 userRoutes.post('/register', async (c) => {
   try {
-    const { email, password, name } = await c.req.json()
+    const { email, pwd, name } = await c.req.json()
 
     // 验证输入
-    if (!email || !password) {
-      return c.json({ message: 'Email and password are required' }, 400)
+    if (!email || !pwd) {
+      return c.json({ message: '邮箱和密码不能不填' }, 400)
     }
 
     // 检查用户是否已存在
@@ -34,13 +34,13 @@ userRoutes.post('/register', async (c) => {
     }
 
     // 密码加密
-    const hashedPassword = md5(md5(password) + 'clicli2333?side.cc')
+    const hashedpwd = md5(md5(pwd) + 'clicli2333?side.cc')
 
     // 创建用户
     const user = await prisma.user.create({
       data: {
         email,
-        password: hashedPassword,
+        pwd: hashedpwd,
         name
       },
       select: {
@@ -61,11 +61,11 @@ userRoutes.post('/register', async (c) => {
 // 用户登录
 userRoutes.post('/login', async (c) => {
   try {
-    const { email, password } = await c.req.json()
+    const { email, pwd } = await c.req.json()
     const JWT_KEY = process.env.JWT_KEY || 'your-secret-key-change-in-production'
 
     // 验证输入
-    if (!email || !password) {
+    if (!email || !pwd) {
       return c.json({ message: '邮箱和密码必须' }, 400)
     }
 
@@ -79,9 +79,9 @@ userRoutes.post('/login', async (c) => {
     }
 
     // 验证密码
-    const hashedPassword = md5(md5(password) + 'clicli2333?side.cc')
-    const isPasswordValid = hashedPassword === user.password
-    if (!isPasswordValid) {
+    const hashedpwd = md5(md5(pwd) + 'clicli2333?side.cc')
+    const ispwdValid = hashedpwd === user.pwd
+    if (!ispwdValid) {
       return c.json({ message: '用户名或密码不存在' }, 401)
     }
 
