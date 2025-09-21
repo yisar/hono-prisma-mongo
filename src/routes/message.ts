@@ -9,8 +9,6 @@ const messageRoutes = new Hono()
 messageRoutes.get('/', async (c) => {
   try {
     const userId = c.get('jwtPayload').sub
-
-    // 获取收到的消息
     const receivedMessages = await prisma.message.findMany({
       where: { receiverId: userId },
       include: {

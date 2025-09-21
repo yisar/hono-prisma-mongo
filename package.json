@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "wrangler dev src/index.ts",
-    "deploy": "npx wrangler deploy"
+    "deploy": "npx wrangler deploy",
+    "push":"pnpx prisma db push"
   },
   "dependencies": {
     "@hono/node-server": "^1.11.1",
